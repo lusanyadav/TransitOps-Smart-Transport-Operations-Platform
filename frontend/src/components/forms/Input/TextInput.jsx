@@ -1,6 +1,7 @@
 /**
  * <TextInput label="Registration No." value={v} onChange={setV} placeholder="GJ01AB1234" />
  */
+
 export default function TextInput({
   label,
   value,
@@ -12,6 +13,11 @@ export default function TextInput({
   className = '',
   ...rest
 }) {
+  const inputValue =
+    type === 'date' && value
+      ? new Date(value).toISOString().split('T')[0]
+      : value;
+
   return (
     <label className={`block ${className}`}>
       {label && (
@@ -19,9 +25,10 @@ export default function TextInput({
           {label}
         </span>
       )}
+
       <input
         type={type}
-        value={value}
+        value={inputValue}
         placeholder={placeholder}
         disabled={disabled}
         onChange={(e) => onChange?.(e.target.value)}
@@ -32,7 +39,12 @@ export default function TextInput({
         }`}
         {...rest}
       />
-      {error && <span className="mt-1 block text-xs text-status-danger">{error}</span>}
+
+      {error && (
+        <span className="mt-1 block text-xs text-status-danger">
+          {error}
+        </span>
+      )}
     </label>
   );
 }

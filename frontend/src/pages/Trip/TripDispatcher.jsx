@@ -1,4 +1,4 @@
-import { Check, X, TriangleAlert } from "lucide-react";
+import { Check, X, TriangleAlert, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import PageHeader from "@/components/layout/PageHeader";
@@ -11,9 +11,9 @@ import Button from "@/components/forms/Button/Button";
 import ReadOnlyBanner from "@/components/common/ReadOnlyBanner";
 
 import { TRIP_LIFECYCLE } from "@/services/mockData";
-import { getTrips, createTrip, updateTrip } from "./tripService";
-// import { getVehicles } from "./vehicleService";
-import { getDrivers, getVehicles } from "../Driver/driverService";
+import { getTrips, createTrip, updateTrip, deleteTrip } from "./tripService";
+import { getVehicles } from "../Vehicle/vehicleService";
+import { getDrivers } from "../Driver/driverService";
 
 import { useAuth } from "@/context/AuthContext";
 
@@ -38,6 +38,12 @@ export default function TripDispatcher() {
   const [error, setError] = useState("");
 
   const [lastStatus, setLastStatus] = useState("Draft");
+
+  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+
+  // Track which trip (if any) is being edited
+  const [editingId, setEditingId] = useState(null);
 
   const { hasAccess } = useAuth();
 
@@ -84,8 +90,7 @@ export default function TripDispatcher() {
   const loadVehicles = async () => {
     try {
       const data = await getVehicles();
-      console.log("Vehicles loaded:", data); 
-
+      console.log("Vehicles loaded:", data);
 
       setVehicles(data);
     } catch (err) {
@@ -97,7 +102,7 @@ export default function TripDispatcher() {
     try {
       const data = await getDrivers();
 
-      console.log("Drivers loaded:", data); 
+      console.log("Drivers loaded:", data);
 
       setDrivers(data);
     } catch (err) {
@@ -124,35 +129,128 @@ export default function TripDispatcher() {
     form.plannedDistance !== "" &&
     !capacityExceeded;
 
+  const resetForm = () => {
+    setForm(EMPTY_FORM);
+    setEditingId(null);
+    setError("");
+    setLastStatus("Draft");
+  };
+
+  const validateForm = () => {
+    if (
+      !form.source.trim() ||
+      !form.destination.trim() ||
+      !form.vehicle ||
+      !form.driver ||
+      form.cargoWeight === "" ||
+      form.plannedDistance === ""
+    ) {
+      setError("All fields are required.");
+      return false;
+    }
+
+    if (Number(form.cargoWeight) <= 0) {
+      setError("Cargo weight must be greater than 0.");
+      return false;
+    }
+
+    if (Number(form.plannedDistance) <= 0) {
+      setError("Planned distance must be greater than 0.");
+      return false;
+    }
+
+    if (capacityExceeded) {
+      setError("Cargo weight exceeds vehicle capacity.");
+      return false;
+    }
+
+    return true;
+  };
+
   const handleDispatch = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
     try {
-      await createTrip({
-        source: form.source,
+      setSaving(true);
 
-        destination: form.destination,
+      if (editingId) {
+        // Update existing trip
+        await updateTrip(editingId, {
+          source: form.source,
+          destination: form.destination,
+          vehicle_id: Number(form.vehicle),
+          driver_id: Number(form.driver),
+          cargo_weight: Number(form.cargoWeight),
+          planned_distance: Number(form.plannedDistance),
+        });
+      } else {
+        // Create new trip
+        await createTrip({
+          source: form.source,
 
-        vehicle_id: Number(form.vehicle),
+          destination: form.destination,
 
-        driver_id: Number(form.driver),
+          vehicle_id: Number(form.vehicle),
 
-        cargo_weight: Number(form.cargoWeight),
+          driver_id: Number(form.driver),
 
-        planned_distance: Number(form.plannedDistance),
+          cargo_weight: Number(form.cargoWeight),
 
-        user_id: 1,
+          planned_distance: Number(form.plannedDistance),
 
-        status: "Dispatched",
-      });
+          user_id: 1,
 
-      setLastStatus("Dispatched");
+          status: "Dispatched",
+        });
 
-      setForm(EMPTY_FORM);
+        setLastStatus("Dispatched");
+      }
 
-      setError("");
+      resetForm();
 
       loadTrips();
     } catch (err) {
-      setError(err.response?.data?.message || "Trip creation failed");
+      setError(err.response?.data?.message || "Trip save failed");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleEditClick = (trip) => {
+    setEditingId(trip.id);
+    setForm({
+      source: trip.source || "",
+      destination: trip.destination || "",
+      vehicle: trip.vehicle != null ? String(trip.vehicle) : "",
+      driver: trip.driver != null ? String(trip.driver) : "",
+      cargoWeight: trip.cargoWeight ?? "",
+      plannedDistance: trip.plannedDistance ?? "",
+    });
+    setError("");
+    setLastStatus(trip.status || "Draft");
+  };
+
+  const handleDeleteTrip = async (trip) => {
+    if (!window.confirm(`Delete trip ${trip.source} → ${trip.destination}?`)) {
+      return;
+    }
+
+    try {
+      setDeletingId(trip.id);
+
+      await deleteTrip(trip.id);
+
+      if (editingId === trip.id) {
+        resetForm();
+      }
+
+      loadTrips();
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -173,11 +271,7 @@ export default function TripDispatcher() {
   };
 
   const handleCancelForm = () => {
-    setForm(EMPTY_FORM);
-
-    setError("");
-
-    setLastStatus("Draft");
+    resetForm();
   };
 
   return (
@@ -220,7 +314,10 @@ export default function TripDispatcher() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <Panel title="Create Trip" className="xl:col-span-1">
+        <Panel
+          title={editingId ? "Edit Trip" : "Create Trip"}
+          className="xl:col-span-1"
+        >
           <div className="space-y-3">
             <TextInput
               label="Source"
@@ -297,9 +394,10 @@ export default function TripDispatcher() {
               <Button
                 // disabled={!canDispatch}
                 onClick={handleDispatch}
-                className="flex-1"
+                disabled={saving}
+                className="flex-1 hover:cursor-pointer "
               >
-                Dispatch
+                {saving ? "Saving..." : editingId ? "Update Trip" : "Dispatch"}
               </Button>
 
               <Button variant="secondary" onClick={handleCancelForm}>
@@ -317,7 +415,9 @@ export default function TripDispatcher() {
           {trips.map((trip) => (
             <div
               key={trip.id}
-              className="flex justify-between border rounded-lg p-3"
+              className={`flex justify-between border rounded-lg p-3 ${
+                editingId === trip.id ? "border-status-info bg-paper" : ""
+              }`}
             >
               <div>
                 <p className="font-mono text-xs">{trip.id}</p>
@@ -331,24 +431,63 @@ export default function TripDispatcher() {
                 </p>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex items-start gap-3">
                 <StatusBadge status={trip.status} />
 
                 {canEdit && trip.status === "Dispatched" && (
                   <div className="flex gap-1">
-                    <button
-                      onClick={() => completeTrip(trip.id)}
-                      className="bg-green-100 p-2 rounded"
-                    >
-                      <Check size={14} />
-                    </button>
+                    <div className="relative group">
+                      <button
+                        onClick={() => completeTrip(trip.id)}
+                        className="bg-green-100 p-2 rounded hover:cursor-pointer hover:bg-green-200"
+                      >
+                        <Check size={14} />
+                      </button>
+                      <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1 whitespace-nowrap rounded bg-ink-900 px-2 py-1 text-[10px] text-white opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                        Mark as Completed
+                      </span>
+                    </div>
 
-                    <button
-                      onClick={() => cancelTrip(trip.id)}
-                      className="bg-red-100 p-2 rounded"
-                    >
-                      <X size={14} />
-                    </button>
+                    <div className="relative group">
+                      <button
+                        onClick={() => cancelTrip(trip.id)}
+                        className="bg-red-100 p-2 rounded hover:cursor-pointer hover:bg-red-200"
+                      >
+                        <X size={14} />
+                      </button>
+                      <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1 whitespace-nowrap rounded bg-ink-900 px-2 py-1 text-[10px] text-white opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                        Cancel Trip
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {canEdit && (
+                  <div className="flex gap-1">
+                    <div className="relative group">
+                      <button
+                        onClick={() => handleEditClick(trip)}
+                        className="bg-blue-100 p-2 rounded hover:cursor-pointer hover:bg-blue-200"
+                      >
+                        <Pencil size={14} />
+                      </button>
+                      <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1 whitespace-nowrap rounded bg-ink-900 px-2 py-1 text-[10px] text-white opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                        Edit Trip
+                      </span>
+                    </div>
+
+                    <div className="relative group">
+                      <button
+                        onClick={() => handleDeleteTrip(trip)}
+                        disabled={deletingId === trip.id}
+                        className="bg-red-100 p-2 rounded hover:cursor-pointer hover:bg-red-200 disabled:opacity-50"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                      <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1 whitespace-nowrap rounded bg-ink-900 px-2 py-1 text-[10px] text-white opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                        {deletingId === trip.id ? "Deleting..." : "Delete Trip"}
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>

@@ -22,11 +22,11 @@ export default function Select({ label, options = [], value, onChange, placehold
           disabled={disabled}
           className="w-full appearance-none rounded-lg border border-line bg-surface py-2 pl-3 pr-8 text-sm text-text-900 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20 disabled:bg-paper disabled:text-text-400"
         >
-          {placeholder && (
+          
             <option value="" disabled>
-              {placeholder}
+              {placeholder || 'Select an option'}
             </option>
-          )}
+          
           {normalized.map((opt) => (
             <option key={opt.value} value={opt.value} disabled={opt.disabled}>
               {opt.label}
