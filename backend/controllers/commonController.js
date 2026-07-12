@@ -1,4 +1,4 @@
-const { poolPromise } = require("../database/db_local");
+const { poolPromise } = require("../database/db_online");
 const sql = require("mssql");
 
 const getAllCommon = async (req, res) => {

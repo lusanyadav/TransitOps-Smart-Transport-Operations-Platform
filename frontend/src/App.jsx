@@ -5,6 +5,7 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import ModuleGuard from '@/components/auth/ModuleGuard';
 import MainLayout from '@/layouts/MainLayout';
 import Login from '@/pages/Auth/Login';
+import SignUp from '@/pages/Auth/SignUp';
 import ForgotPassword from '@/pages/Auth/ForgotPassword';
 import Dashboard from '@/pages/Dashboard/Dashboard';
 import VehicleList from '@/pages/Vehicle/VehicleList';
@@ -23,6 +24,7 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             <Route path={ROUTES.LOGIN} element={<Login />} />
+            <Route path={ROUTES.SIGNUP} element={<SignUp />} />
             <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPassword />} />
 
             <Route element={<ProtectedRoute />}>

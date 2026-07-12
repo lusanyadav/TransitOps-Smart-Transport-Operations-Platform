@@ -21,24 +21,28 @@ export default function Login() {
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState('');
   const [locked, setLocked] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (locked) return;
+    if (locked || loading) return;
 
     if (!email || !password) {
       setError('Enter your work email and password to continue.');
       return;
     }
 
-    const result = login({ email, password, role, remember });
+    setLoading(true);
+    setError('');
+    const result = await login({ email, password, role, remember });
+    setLoading(false);
+
     if (!result.ok) {
       setError(result.error);
       setLocked(!!result.locked);
       return;
     }
 
-    setError('');
     const redirectTo = location.state?.from;
     navigate(redirectTo && redirectTo !== ROUTES.LOGIN ? redirectTo : result.landing || ROUTES.DASHBOARD, {
       replace: true,
@@ -57,7 +61,7 @@ export default function Login() {
           value={email}
           onChange={setEmail}
           placeholder="raven.k@transitops.in"
-          disabled={locked}
+          disabled={locked || loading}
         />
         <TextInput
           label="Password"
@@ -65,9 +69,9 @@ export default function Login() {
           value={password}
           onChange={setPassword}
           placeholder="••••••••"
-          disabled={locked}
+          disabled={locked || loading}
         />
-        <Select stacked label="Sign in as" options={ROLES} value={role} onChange={setRole} disabled={locked} />
+        <Select stacked label="Sign in as" options={ROLES} value={role} onChange={setRole} disabled={locked || loading} />
 
         {error && (
           <div className="flex items-start gap-2 rounded-lg border border-status-danger/30 bg-status-danger-bg px-3 py-2 text-xs text-status-danger">
@@ -77,18 +81,25 @@ export default function Login() {
         )}
 
         <div className="flex items-center justify-between">
-          <Checkbox label="Remember me" checked={remember} onChange={setRemember} disabled={locked} />
+          <Checkbox label="Remember me" checked={remember} onChange={setRemember} disabled={locked || loading} />
           <Link to={ROUTES.FORGOT_PASSWORD} className="text-xs font-medium text-amber-600 hover:underline">
             Forgot password?
           </Link>
         </div>
 
-        <Button type="submit" className="w-full" disabled={locked}>
-          {locked ? 'Account Locked' : 'Sign In'}
+        <Button type="submit" className="w-full" disabled={locked || loading}>
+          {locked ? 'Account Locked' : loading ? 'Signing in…' : 'Sign In'}
         </Button>
       </form>
 
       <p className="mt-6 text-center text-xs text-text-400">
+        Don't have an account?{' '}
+        <Link to={ROUTES.SIGNUP} className="font-medium text-amber-600 hover:underline">
+          Sign up
+        </Link>
+      </p>
+
+      <p className="mt-2 text-center text-xs text-text-400">
         Access is scoped by role · Role-Based Access Control (RBAC)
       </p>
 

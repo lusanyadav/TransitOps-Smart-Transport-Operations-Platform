@@ -28,7 +28,7 @@ export default function Navbar() {
       </div>
 
       <div className="flex items-center gap-3">
-        <span className="text-sm font-medium text-text-600">{user?.name}</span>
+        <span className="text-sm font-medium text-text-600">{user?.full_name}</span>
         <span className="flex items-center gap-2 rounded-full border border-line py-1 pl-1 pr-3">
           <span className="flex h-7 w-7 items-center justify-center rounded-full bg-ink-900 font-mono text-xs font-semibold text-white">
             {user?.initials}

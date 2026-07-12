@@ -1,5 +1,6 @@
 export const ROUTES = {
   LOGIN: '/login',
+  SIGNUP: '/signup',
   FORGOT_PASSWORD: '/login/forgot',
   DASHBOARD: '/',
   FLEET: '/fleet',

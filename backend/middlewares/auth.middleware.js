@@ -12,6 +12,19 @@ module.exports = (req, res, next) => {
     req.user = decoded;
     next();
   } catch (err) {
-    return res.status(401).json({ message: "Invalid token" });
+
+    if (err.name === "TokenExpiredError") {
+      return res.status(401).json({
+        success: false,
+        code: "TOKEN_EXPIRED",
+        message: "Session expired. Please login again.",
+      });
+    }
+
+    return res.status(401).json({
+      success: false,
+      code: "INVALID_TOKEN",
+      message: "Invalid authentication token.",
+    });
   }
 };

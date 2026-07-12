@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const { secret, expiresIn } = require("../services/jwt");
 const { hashPassword, comparePassword } = require("../utils/password.util");
-const { poolPromise } = require("../database/db_local");
+const { poolPromise } = require("../database/db_online");
 const sql = require("mssql");
 
 exports.signup = async (req, res) => {
@@ -44,7 +44,7 @@ exports.signup = async (req, res) => {
           role,
           full_name
         )
-        OUTPUT INSERTED.user_id
+        OUTPUT INSERTED.*
         VALUES (
           @email,
           @password,
@@ -54,13 +54,15 @@ exports.signup = async (req, res) => {
       `);
 
     const userId = userResult.recordset[0].user_id;
+    const user = userResult.recordset[0]
+
 
     const token = jwt.sign(
       {
-        id: userId,
-        email: normalizedEmail,
-        role,
-        full_name,
+        id: user.user_id,
+        email: user.email,
+        role: user.role,
+        full_name: user.full_name,
       },
       secret,
       {
@@ -69,12 +71,11 @@ exports.signup = async (req, res) => {
     );
 
     return res.status(201).json({
-      message: "User created successfully",
       user: {
-        user_id: userId,
-        email: normalizedEmail,
-        role,
-        full_name,
+        user_id: user.user_id,
+        email: user.email,
+        role: user.role,
+        full_name: user.full_name,
       },
       token,
     });
