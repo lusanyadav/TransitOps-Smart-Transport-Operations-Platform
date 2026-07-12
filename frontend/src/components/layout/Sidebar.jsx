@@ -1,7 +1,11 @@
 import { NavLink } from 'react-router-dom';
 import { NAV_ITEMS } from '@/constants/nav';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Sidebar() {
+  const { hasAccess } = useAuth();
+  const visibleItems = NAV_ITEMS.filter((item) => hasAccess(item.module) !== 'none');
+
   return (
     <aside className="flex h-screen w-60 shrink-0 flex-col bg-ink-950 text-white">
       <div className="flex items-center gap-2.5 px-5 py-6">
@@ -16,21 +20,28 @@ export default function Sidebar() {
       </div>
 
       <nav className="scroll-thin flex-1 space-y-1 overflow-y-auto px-3">
-        {NAV_ITEMS.map(({ label, path, icon: Icon }) => (
+        {visibleItems.map(({ label, path, icon: Icon, module }) => (
           <NavLink
             key={path}
             to={path}
             end={path === '/'}
             className={({ isActive }) =>
-              `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+              `flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                 isActive
                   ? 'bg-amber-500 text-ink-950'
                   : 'text-white/70 hover:bg-ink-800 hover:text-white'
               }`
             }
           >
-            <Icon size={18} strokeWidth={2} />
-            {label}
+            <span className="flex items-center gap-3">
+              <Icon size={18} strokeWidth={2} />
+              {label}
+            </span>
+            {hasAccess(module) === 'view' && (
+              <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white/50">
+                View
+              </span>
+            )}
           </NavLink>
         ))}
       </nav>
