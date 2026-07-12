@@ -12,8 +12,8 @@ import ReadOnlyBanner from "@/components/common/ReadOnlyBanner";
 
 import { TRIP_LIFECYCLE } from "@/services/mockData";
 import { getTrips, createTrip, updateTrip, deleteTrip } from "./tripService";
-import { getVehicles } from "../Vehicle/vehicleService";
-import { getDrivers } from "../Driver/driverService";
+// import { getVehicles } from "./vehicleService";
+import { getDrivers, getVehicles } from "../Driver/driverService";
 
 import { useAuth } from "@/context/AuthContext";
 

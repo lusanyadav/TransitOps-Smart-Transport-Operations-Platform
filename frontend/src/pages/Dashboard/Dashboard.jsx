@@ -32,7 +32,28 @@ export default function Dashboard() {
   const [vehicleType, setVehicleType] = useState("All");
   const [status, setStatus] = useState("All");
   const [region, setRegion] = useState("All");
+  const getVehicleLabel = (id) => {
+  const vehicle = vehicles.find(
+        (v) => String(v.vehicle_id) === String(id)
+      );
 
+      return vehicle?.vehicle_no || id;
+  };
+  const getDriverLabel = (id) => {
+    const driver = drivers.find(
+      (v) => String(v.driver_id) === String(id)
+    );
+
+    return driver?.driver_name || id;
+  };
+
+  const getTripSourceLabel = (id) => {
+    const trip = trips.find(
+      (v) => String(v.trip_id) === String(id)
+    );
+
+    return trip?.source + " to " + trip?.destination || id;
+};
   useEffect(() => {
     const loadDashboard = async () => {
       try {
@@ -235,16 +256,16 @@ export default function Dashboard() {
                     className="border-b border-line-soft last:border-0"
                   >
                     <td className="py-2.5 pr-3 font-mono text-xs font-medium text-text-900">
-                      {trip.id}
+                      {getTripSourceLabel(trip.trip_id)}
                     </td>
                     <td className="py-2.5 pr-3 font-mono text-xs text-text-600">
-                      {trip.vehicle}
+                      {getVehicleLabel(trip.vehicle_id)}
                     </td>
-                    <td className="py-2.5 pr-3 text-text-600">{trip.driver}</td>
+                    <td className="py-2.5 pr-3 text-text-600">{getDriverLabel(trip.driver_id)}</td>
                     <td className="py-2.5 pr-3">
                       <StatusBadge status={trip.status} />
                     </td>
-                    <td className="py-2.5 pr-3 text-text-400">{trip.note}</td>
+                    <td className="py-2.5 pr-3 text-text-400">{trip.remark}</td>
                   </tr>
                 ))}
                 {filteredTrips.length === 0 && (
