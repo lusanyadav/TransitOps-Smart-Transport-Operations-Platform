@@ -1,16 +1,35 @@
-# React + Vite
+# TransitOps — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Smart Transport Operations Platform (frontend only, backend to follow).
 
-Currently, two official plugins are available:
+## Stack
+- React 19 + Vite
+- React Router
+- Tailwind CSS v4
+- lucide-react icons
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Run locally
+```bash
+npm install
+npm run dev
+```
 
-## React Compiler
+## Structure
+Follows the agreed folder layout under `src/`:
+`components/`, `layouts/`, `pages/`, `hooks/`, `context/`, `services/`,
+`routes/`, `utils/`, `constants/`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Progress (page-by-page)
+- [x] App shell — Sidebar, Navbar, MainLayout
+- [x] Dashboard
+- [ ] Vehicle Registry (Fleet)
+- [ ] Drivers & Safety Profiles
+- [ ] Trip Dispatcher
+- [ ] Maintenance
+- [ ] Fuel & Expense Management
+- [ ] Reports & Analytics
+- [ ] Settings & RBAC
+- [ ] Auth (Login)
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Data is mocked in `src/services/mockData.js` — swap for real API calls
+once the backend is ready.
