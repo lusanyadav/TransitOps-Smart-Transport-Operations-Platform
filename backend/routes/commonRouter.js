@@ -12,7 +12,7 @@ const {
 
 const auth = require("../middlewares/auth.middleware");
 
-router.use(auth);
+// router.use(auth);
 
 router.get("/", getAllCommon);
 router.get("/:id", getSingleCommon);
